@@ -16,7 +16,7 @@ Enemy.prototype.collision = function(){
         return true;
     };
     return false;
-}
+};
 // Update the enemy's position, required method for game
 // Parameter: dt, a time delta between ticks
 Enemy.prototype.update = function(dt) {
@@ -40,7 +40,7 @@ var WinStar = function (x,y) {
     this.y = y;
     this.speed = 100;
     this.sprite = 'images/Star.png';
-}
+};
 
 // Now write your own player class
 // This class requires an update(), render() and
@@ -48,6 +48,7 @@ var WinStar = function (x,y) {
 var Player = function(){
     this.reset();
     this.sprite = 'images/char-cat-girl.png';
+    this.rightDelay, this.leftDelay, this.upDelay, this.downDelay = false;
 };
 Player.prototype.update = function(dt){
     if (this.winStar) {
@@ -72,29 +73,63 @@ Player.prototype.handleInput = function(dir){
     if (this.speed) {
         return;
     }
-    switch(dir){
+    switch(dir) {
         case 'left':
+            if (this.leftDelay) {
+                break;
+            }
+            this.leftDelay = true;
             if (this.x > 0){
                 this.x = this.x - 101;
             }
             break;
         case 'right':
+            if (this.rightDelay) {
+                break;
+            }
+            this.rightDelay = true;
             if (this.x < (101*4)){
                 this.x = this.x + 101;
             }
             break;
         case 'down':
+            if (this.downDelay) {
+                break;
+            }
+            this.downDelay = true;
             if (this.y < (83*5)-10){
                 this.y = this.y + 83;
             }
             break;
         case 'up':
+            if (this.upDelay) {
+                break;
+            }
+            this.upDelay = true;
             if (this.y > 0){
                 this.y = this.y - 83;
             }
             break;
     }
-}
+};
+
+Player.prototype.keyDepress = function(key){
+    switch(key) {
+        case 'left':
+            this.leftDelay = false;
+            break;
+        case 'right':
+            this.rightDelay = false;
+            break;
+        case 'down':
+            this.downDelay = false;
+            break;
+        case 'up':
+            this.upDelay = false;
+            break;
+    }
+};
+
 Player.prototype.render = function(){
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
     if (this.winStar) {
@@ -104,7 +139,7 @@ Player.prototype.render = function(){
 Player.prototype.reset = function() {
     this.y = 5*83 - 10;
     this.x = 2*101;
-}
+};
 
 // Now instantiate your objects.
 // Place all enemy objects in an array called allEnemies
@@ -121,7 +156,7 @@ for (var rr = 1; rr < 4; rr++) {
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
-document.addEventListener('keyup', function(e) {
+document.addEventListener('keydown', function(e) {
     var allowedKeys = {
         37: 'left',
         38: 'up',
@@ -130,4 +165,15 @@ document.addEventListener('keyup', function(e) {
     };
 
     player.handleInput(allowedKeys[e.keyCode]);
+});
+
+document.addEventListener('keyup', function(e) {
+    var allowedKeys = {
+        37: 'left',
+        38: 'up',
+        39: 'right',
+        40: 'down'
+    };
+
+    player.keyDepress(allowedKeys[e.keyCode]);
 });
