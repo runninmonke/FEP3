@@ -43,11 +43,12 @@ var WinStar = function(x,y) {
 };
 
 WinStar.prototype.update = function(dt) {
+    var lowerBound = window.victoryConditionsHaveBeenMet ? (5*83 + 35) : 0;
     this.y = this.y - (this.speed*dt);
     if (this.y < -83) {
         this.speed *= -1;
     }
-    else if (this.y > 0) {
+    else if (this.y > lowerBound) {
         this.speed *= -1;
     }
 };
@@ -64,16 +65,23 @@ var Player = function(){
     this.sprite = 'images/char-cat-girl.png';
     this.rightDelay, this.leftDelay, this.upDelay, this.downDelay = false;
     this.winStars = [null, null, null, null, null];
+    window.victoryConditionsHaveBeenMet = false;
 };
 Player.prototype.update = function(dt){
-    for (i in this.winStars){
-        if (this.winStars[i]) {
-            this.winStars[i].update(dt);
+    var victory = true;
+    this.winStars.forEach(function(star, i, stars) {
+        if (star) {
+            star.update(dt);
+        } else {
+            victory = false;
         }
+    })
+    if (victory) {
+        win(dt);
     }
     if (this.y < 0) {
         this.winStars[(this.x == 0) ? 0 : (this.x/101)] = new WinStar(this.x, this.y);
-        console.log(this.winStars);
+
         this.reset();
     }
     if (this.speed) {
@@ -148,11 +156,11 @@ Player.prototype.keyDepress = function(key){
 
 Player.prototype.render = function(){
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-    for (i in this.winStars) {
-        if (this.winStars[i]) {
-            this.winStars[i].render();
+    this.winStars.forEach(function(star, i, stars) {
+        if (star) {
+            star.render();
         }
-    }
+    });
 };
 Player.prototype.reset = function() {
     this.y = 5*83 - 10;
@@ -195,3 +203,9 @@ document.addEventListener('keyup', function(e) {
 
     player.keyDepress(allowedKeys[e.keyCode]);
 });
+
+var win = function(dt) {
+    player.y = 1500;
+    player.x = -1500;
+    window.victoryConditionsHaveBeenMet = true;
+};
