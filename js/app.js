@@ -35,11 +35,25 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
-var WinStar = function (x,y) {
+var WinStar = function(x,y) {
     this.x = x;
     this.y = y;
     this.speed = 100;
     this.sprite = 'images/Star.png';
+};
+
+WinStar.prototype.update = function(dt) {
+    this.y = this.y - (this.speed*dt);
+    if (this.y < -83) {
+        this.speed *= -1;
+    }
+    else if (this.y > 0) {
+        this.speed *= -1;
+    }
+};
+
+WinStar.prototype.render = function() {
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
 // Now write your own player class
@@ -49,16 +63,17 @@ var Player = function(){
     this.reset();
     this.sprite = 'images/char-cat-girl.png';
     this.rightDelay, this.leftDelay, this.upDelay, this.downDelay = false;
+    this.winStars = [null, null, null, null, null];
 };
 Player.prototype.update = function(dt){
-    if (this.winStar) {
-        this.winStar.y = this.winStar.y - (this.winStar.speed*dt);
-        if (this.winStar.y < -202) {
-            delete this.winStar;
+    for (i in this.winStars){
+        if (this.winStars[i]) {
+            this.winStars[i].update(dt);
         }
     }
     if (this.y < 0) {
-        this.winStar = new WinStar(this.x, this.y);
+        this.winStars[(this.x == 0) ? 0 : (this.x/101)] = new WinStar(this.x, this.y);
+        console.log(this.winStars);
         this.reset();
     }
     if (this.speed) {
@@ -69,6 +84,7 @@ Player.prototype.update = function(dt){
         }
     }
 };
+
 Player.prototype.handleInput = function(dir){
     if (this.speed) {
         return;
@@ -132,8 +148,10 @@ Player.prototype.keyDepress = function(key){
 
 Player.prototype.render = function(){
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
-    if (this.winStar) {
-        ctx.drawImage(Resources.get(this.winStar.sprite), this.winStar.x, this.winStar.y);
+    for (i in this.winStars) {
+        if (this.winStars[i]) {
+            this.winStars[i].render();
+        }
     }
 };
 Player.prototype.reset = function() {
