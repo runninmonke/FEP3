@@ -55,7 +55,7 @@ var WinStar = function(x,y) {
 
 //Animates winStar. Animation changes if victory conditions met.
 WinStar.prototype.update = function(dt) {
-    var lowerBound = window.victoryConditionsMet ? (5*ROW_HEIGHT + 35) : 0;
+    var lowerBound = window.victoryConditionsMet ? (5*ROW_HEIGHT + 50) : 0;
     this.y = this.y - (this.speed*dt);
     if (this.y < -ROW_HEIGHT) {
         this.speed *= -1;
