@@ -104,12 +104,15 @@ var Engine = (function(global) {
      * they are just drawing the entire screen over and over.
      */
     function render() {
-        /* This array holds the relative URL to the image used
-         * for that particular row of the game level.
-         */
-        if (window.victoryConditionsHaveBeenMet) {
+        // Hijack render function if victory conditions are met in order to
+        // accomplish the desired victory animation. Else render normally.
+        if (window.victoryConditionsMet) {
             player.render();
         } else {
+
+            /* This array holds the relative URL to the image used
+            * for that particular row of the game level.
+            */
             var rowImages = [
                     'images/water-block.png',   // Top row is water
                     'images/stone-block.png',   // Row 1 of 3 of stone

@@ -1,28 +1,37 @@
-// Enemies our player must avoid
-var Enemy = function(row) {
-    // Variables applied to each of our instances go here,
-    // we've provided one for you to get started
+//Effective width and height of game map tiles.
+//Most frequently used for positioning entities,
+//usually with a small offset based on what looks best.
+var ROW_HEIGHT = 83;
+var COLUMN_WIDTH = 101;
 
-    // The image/sprite for our enemies, this uses
-    // a helper we've provided to easily load images
+// Enemy class. Initialize at a randomized x position and speed.
+// Parameter: row, the row the enemy should be located in.
+var Enemy = function(row) {
     this.x = Math.floor(Math.random()*1500) - 900;
-    this.y = row*83 - 25;
+    this.y = row*ROW_HEIGHT - 25;
     this.speed = Math.floor(Math.random()*400) + 100;
 };
 
+//Image file for enemy character
 Enemy.prototype.sprite = 'images/enemy-bug.png';
+
+//Return whether or not the enemy has collided with the player
 Enemy.prototype.collision = function(){
     if (this.x > player.x - 56 && this.x < player.x + 56 && this.y == player.y - 15) {
         return true;
     };
     return false;
 };
-// Update the enemy's position, required method for game
-// Parameter: dt, a time delta between ticks
+
+// Update the enemy's position. Re-initialize enemy position and speed if
+// they have traveled far enough off canvas. New position and speed randomized
+// to limit predicability and randomize time of re-entry to canvas.
+// Also imparts an animation to the player if a collision is detected.
+// Parameter: dt, a time delta between ticks from engine.js to provide smooth animation
 Enemy.prototype.update = function(dt) {
     this.x = this.x + this.speed*dt;
     if (this.x > 700) {
-        this.x = Math.floor(Math.random()*-900) - 101;
+        this.x = Math.floor(Math.random()*-900) - COLUMN_WIDTH;
         this.speed = Math.floor(Math.random()*400) + 100;
     }
     if (this.collision()) {
@@ -30,11 +39,13 @@ Enemy.prototype.update = function(dt) {
     }
 };
 
-// Draw the enemy on the screen, required method for game
+// Draw the enemy on the screen using ctx from engine.js
 Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
+//Class for animated stars that appear when player reaches water. They
+//get created in player.winStars array.
 var WinStar = function(x,y) {
     this.x = x;
     this.y = y;
@@ -42,10 +53,11 @@ var WinStar = function(x,y) {
     this.sprite = 'images/Star.png';
 };
 
+//Animates winStar. Animation changes if victory conditions met.
 WinStar.prototype.update = function(dt) {
-    var lowerBound = window.victoryConditionsHaveBeenMet ? (5*83 + 35) : 0;
+    var lowerBound = window.victoryConditionsMet ? (5*ROW_HEIGHT + 35) : 0;
     this.y = this.y - (this.speed*dt);
-    if (this.y < -83) {
+    if (this.y < -ROW_HEIGHT) {
         this.speed *= -1;
     }
     else if (this.y > lowerBound) {
@@ -53,13 +65,13 @@ WinStar.prototype.update = function(dt) {
     }
 };
 
+// Draw the winStar on the screen using ctx from engine.js
 WinStar.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
-// Now write your own player class
-// This class requires an update(), render() and
-// a handleInput() method.
+// Player class. Includes properties and methods for responding to
+//user input appropriately and handling winStars.
 var Player = function(){
     this.reset();
     this.sprite = 'images/char-cat-girl.png';
@@ -67,6 +79,9 @@ var Player = function(){
     this.winStars = [null, null, null, null, null];
     window.victoryConditionsHaveBeenMet = false;
 };
+
+// Handle property updating not directly related to user input. This includes triggering winStars
+// and victory if conditions are met. Responsible for the animation started by collisions.
 Player.prototype.update = function(dt){
     var victory = true;
     this.winStars.forEach(function(star, i, stars) {
@@ -80,7 +95,7 @@ Player.prototype.update = function(dt){
         win(dt);
     }
     if (this.y < 0) {
-        this.winStars[(this.x == 0) ? 0 : (this.x/101)] = new WinStar(this.x, this.y);
+        this.winStars[(this.x == 0) ? 0 : (this.x/COLUMN_WIDTH)] = new WinStar(this.x, this.y);
 
         this.reset();
     }
@@ -93,6 +108,8 @@ Player.prototype.update = function(dt){
     }
 };
 
+// Move the player if an input key is pressed, but only if that key has been depressed
+// since last input and the player is not undergoing a collision animation
 Player.prototype.handleInput = function(dir){
     if (this.speed) {
         return;
@@ -104,7 +121,7 @@ Player.prototype.handleInput = function(dir){
             }
             this.leftDelay = true;
             if (this.x > 0){
-                this.x = this.x - 101;
+                this.x = this.x - COLUMN_WIDTH;
             }
             break;
         case 'right':
@@ -112,8 +129,8 @@ Player.prototype.handleInput = function(dir){
                 break;
             }
             this.rightDelay = true;
-            if (this.x < (101*4)){
-                this.x = this.x + 101;
+            if (this.x < (COLUMN_WIDTH*4)){
+                this.x = this.x + COLUMN_WIDTH;
             }
             break;
         case 'down':
@@ -121,8 +138,8 @@ Player.prototype.handleInput = function(dir){
                 break;
             }
             this.downDelay = true;
-            if (this.y < (83*5)-10){
-                this.y = this.y + 83;
+            if (this.y < (ROW_HEIGHT*5)-10){
+                this.y = this.y + ROW_HEIGHT;
             }
             break;
         case 'up':
@@ -131,12 +148,13 @@ Player.prototype.handleInput = function(dir){
             }
             this.upDelay = true;
             if (this.y > 0){
-                this.y = this.y - 83;
+                this.y = this.y - ROW_HEIGHT;
             }
             break;
     }
 };
 
+// Keep track of when an input key has been depressed
 Player.prototype.keyDepress = function(key){
     switch(key) {
         case 'left':
@@ -154,6 +172,7 @@ Player.prototype.keyDepress = function(key){
     }
 };
 
+// Draw the images for the player and any existing winStars
 Player.prototype.render = function(){
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
     this.winStars.forEach(function(star, i, stars) {
@@ -162,26 +181,35 @@ Player.prototype.render = function(){
         }
     });
 };
+
+// Reset the player to the starting position
 Player.prototype.reset = function() {
-    this.y = 5*83 - 10;
-    this.x = 2*101;
+    this.y = 5*ROW_HEIGHT - 10;
+    this.x = 2*COLUMN_WIDTH;
 };
 
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
+// Trigger victory animation. Global variable used to trigger the victory
+// animation because part of it is accomplished by a conditional hack coded
+// into the render() method in engine.js since that method is inaccessible here.
+var win = function(dt) {
+    player.y = 1500;
+    player.x = -1500;
+    window.victoryConditionsMet = true;
+};
+
+// Instantiate enemy objects in an array and the player object
 var allEnemies = [];
 var player = new Player();
 
-for (var rr = 1; rr < 4; rr++) {
-    for (var r = 6; r > rr; r--) {
-        allEnemies.push(new Enemy(rr));
+// Populate the enemies. Loops result in rows with 5, 4, and 3 enemies.
+for (var row = 1; row < 4; row++) {
+    for (var r = 6; r > row; r--) {
+        allEnemies.push(new Enemy(row));
     }
 }
 
 
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
+// Listen for key presses and send to player.handleInput()
 document.addEventListener('keydown', function(e) {
     var allowedKeys = {
         37: 'left',
@@ -193,6 +221,7 @@ document.addEventListener('keydown', function(e) {
     player.handleInput(allowedKeys[e.keyCode]);
 });
 
+//Listen for key depressed and send to player.keyDepress()
 document.addEventListener('keyup', function(e) {
     var allowedKeys = {
         37: 'left',
@@ -203,9 +232,3 @@ document.addEventListener('keyup', function(e) {
 
     player.keyDepress(allowedKeys[e.keyCode]);
 });
-
-var win = function(dt) {
-    player.y = 1500;
-    player.x = -1500;
-    window.victoryConditionsHaveBeenMet = true;
-};
