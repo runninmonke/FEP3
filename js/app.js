@@ -1,6 +1,6 @@
-//Effective width and height of game map tiles.
-//Most frequently used for positioning entities,
-//usually with a small offset based on what looks best.
+// Effective width and height of the game map tiles.
+// Most frequently used for positioning entities
+// usually with a small offset based on what looks best.
 var ROW_HEIGHT = 83;
 var COLUMN_WIDTH = 101;
 
@@ -28,6 +28,7 @@ Enemy.prototype.collision = function(){
 // to limit predicability and randomize time of re-entry to canvas.
 // Also imparts an animation to the player if a collision is detected.
 // Parameter: dt, a time delta between ticks from engine.js to provide smooth animation
+// used in the same manner in the other update functions
 Enemy.prototype.update = function(dt) {
     this.x = this.x + this.speed*dt;
     if (this.x > 700) {
@@ -39,13 +40,14 @@ Enemy.prototype.update = function(dt) {
     }
 };
 
-// Draw the enemy on the screen using ctx from engine.js
+// Draw the enemy image on the screen using ctx from engine.js
 Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
-//Class for animated stars that appear when player reaches water. They
-//get created in player.winStars array.
+// Class for animated stars that appear when player reaches water. They get created
+// in player.winStars array with an index that corelates to the column they occupy.
+// Parameters: x & y, position coordinates for the winStar to be created at.
 var WinStar = function(x,y) {
     this.x = x;
     this.y = y;
@@ -53,7 +55,7 @@ var WinStar = function(x,y) {
     this.sprite = 'images/Star.png';
 };
 
-//Animates winStar. Animation changes if victory conditions met.
+// Animates winStar. Animation changes if victory conditions are met.
 WinStar.prototype.update = function(dt) {
     var lowerBound = window.victoryConditionsMet ? (5*ROW_HEIGHT + 50) : 0;
     this.y = this.y - (this.speed*dt);
@@ -71,18 +73,18 @@ WinStar.prototype.render = function() {
 };
 
 // Player class. Includes properties and methods for responding to
-//user input appropriately and handling winStars.
+// user input appropriately and handling winStars.
 var Player = function(){
     this.reset();
     this.sprite = 'images/char-cat-girl.png';
     this.rightDelay, this.leftDelay, this.upDelay, this.downDelay = false;
     this.winStars = [null, null, null, null, null];
-    window.victoryConditionsHaveBeenMet = false;
 };
 
-// Handle property updating not directly related to user input. This includes triggering winStars
-// and victory if conditions are met. Responsible for the animation started by collisions.
+// Handle property updating not directly related to user input.
 Player.prototype.update = function(dt){
+
+    // winStar animation and check for victory
     var victory = true;
     this.winStars.forEach(function(star, i, stars) {
         if (star) {
@@ -92,13 +94,17 @@ Player.prototype.update = function(dt){
         }
     })
     if (victory) {
-        win(dt);
+        win();
     }
+
+    // winStar creation
     if (this.y < 0) {
         this.winStars[(this.x == 0) ? 0 : (this.x/COLUMN_WIDTH)] = new WinStar(this.x, this.y);
 
         this.reset();
     }
+
+    // Collision animation
     if (this.speed) {
         this.x = this.x + this.speed*dt;
         if (this.x > 1000) {
@@ -110,6 +116,7 @@ Player.prototype.update = function(dt){
 
 // Move the player if an input key is pressed, but only if that key has been depressed
 // since last input and the player is not undergoing a collision animation
+// Parameter: dir, value of key that has been pressed
 Player.prototype.handleInput = function(dir){
     if (this.speed) {
         return;
@@ -155,6 +162,7 @@ Player.prototype.handleInput = function(dir){
 };
 
 // Keep track of when an input key has been depressed
+// Parameter: key, value of key that was depressed
 Player.prototype.keyDepress = function(key){
     switch(key) {
         case 'left':
@@ -188,10 +196,11 @@ Player.prototype.reset = function() {
     this.x = 2*COLUMN_WIDTH;
 };
 
-// Trigger victory animation. Global variable used to trigger the victory
+// Trigger victory animation. A global variable used to trigger the victory
 // animation because part of it is accomplished by a conditional hack coded
 // into the render() method in engine.js since that method is inaccessible here.
-var win = function(dt) {
+var win = function() {
+    // Player would still be rendered with hack if not repositioned.
     player.y = 1500;
     player.x = -1500;
     window.victoryConditionsMet = true;
