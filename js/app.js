@@ -60,9 +60,11 @@ WinStar.prototype.update = function(dt) {
     var lowerBound = window.victoryConditionsMet ? (5*ROW_HEIGHT + 50) : 0;
     this.y = this.y - (this.speed*dt);
     if (this.y < -ROW_HEIGHT) {
+        this.y = -ROW_HEIGHT;
         this.speed *= -1;
     }
     else if (this.y > lowerBound) {
+        this.y = lowerBound;
         this.speed *= -1;
     }
 };
