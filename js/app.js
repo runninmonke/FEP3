@@ -1,16 +1,34 @@
 // Effective width and height of the game map tiles.
-// Most frequently used for positioning entities
-// usually with a small offset based on what looks best.
+// Most frequently used for positioning entities.
 'use strict';
 var ROW_HEIGHT = 83;
 var COLUMN_WIDTH = 101;
 
+//Offsets for correct visual appearance for positioning and collision.
+var PLAYER_OFFSET_Y = -10;
+var ENEMY_OFFSET_Y = -25;
+var COLLISION_OFFSET_X = 56;
+
+//Animation settings
+var PLAYER_COLLISION_SPEED = 1000;
+var VICTORY_ANIMATION_OVERRUN = 50;
+
+//Game settings
+var MAP_WIDTH = 505;
+var MAP_HEIGHT = 606;
+var MAX_ENEMY_SPEED = 400;
+var MIN_ENEMY_SPEED = 100;
+var ENEMY_END_X = 700;      // The range of x positions enemies
+var ENEMY_START_X = -900;   // are allowed to exist in.
+var MAX_ENEMIES = 5;        // Number of enemies in the top row.
+var COLLISION_END_X = 1000; // X-position where collision animation ends.
+
 // Enemy class. Initialize at a randomized x position and speed.
 // Parameter: row, the row the enemy should be located in.
 var Enemy = function(row) {
-    this.x = Math.floor(Math.random() * 1500) - 900;
-    this.y = row * ROW_HEIGHT - 25;
-    this.speed = Math.floor(Math.random() * 400) + 100;
+    this.x = Math.floor(Math.random() * (-1 * ENEMY_START_X + MAP_WIDTH) + ENEMY_START_X);
+    this.y = row * ROW_HEIGHT + ENEMY_OFFSET_Y;
+    this.speed = Math.floor(Math.random() * MAX_ENEMY_SPEED) + MIN_ENEMY_SPEED;
 };
 
 //Image file for enemy character
@@ -18,7 +36,9 @@ Enemy.prototype.sprite = 'images/enemy-bug.png';
 
 //Return whether or not the enemy has collided with the player
 Enemy.prototype.collision = function() {
-    if (this.x > player.x - 56 && this.x < player.x + 56 && this.y == player.y - 15) {
+    if (this.x > player.x - COLLISION_OFFSET_X &&
+    this.x < player.x + COLLISION_OFFSET_X &&
+    this.y == player.y - (PLAYER_OFFSET_Y - ENEMY_OFFSET_Y)) {
         return true;
     }
     return false;
@@ -32,12 +52,12 @@ Enemy.prototype.collision = function() {
 // used in the same manner in the other update functions
 Enemy.prototype.update = function(dt) {
     this.x = this.x + this.speed * dt;
-    if (this.x > 700) {
-        this.x = Math.floor(Math.random() * -900) - COLUMN_WIDTH;
-        this.speed = Math.floor(Math.random() * 400) + 100;
+    if (this.x > ENEMY_END_X) {
+        this.x = Math.floor(Math.random() * ENEMY_START_X) - COLUMN_WIDTH;
+        this.speed = Math.floor(Math.random() * MAX_ENEMY_SPEED) + MIN_ENEMY_SPEED;
     }
     if (this.collision()) {
-        player.speed = 1000;
+        player.speed = PLAYER_COLLISION_SPEED;
     }
 };
 
@@ -58,7 +78,7 @@ var WinStar = function(x, y) {
 
 // Animates winStar. Animation changes if victory conditions are met.
 WinStar.prototype.update = function(dt) {
-    var lowerBound = window.victoryConditionsMet ? (5 * ROW_HEIGHT + 50) : 0;
+    var lowerBound = window.victoryConditionsMet ? (5 * ROW_HEIGHT + VICTORY_ANIMATION_OVERRUN) : 0;
     this.y = this.y - (this.speed * dt);
     if (this.y < -ROW_HEIGHT) {
         this.y = -ROW_HEIGHT;
@@ -109,7 +129,7 @@ Player.prototype.update = function(dt) {
     // Collision animation
     if (this.speed) {
         this.x = this.x + this.speed * dt;
-        if (this.x > 1000) {
+        if (this.x > COLLISION_END_X) {
             delete this.speed;
             this.reset();
         }
@@ -147,7 +167,7 @@ Player.prototype.handleInput = function(dir) {
                 break;
             }
             this.downDelay = true;
-            if (this.y < (ROW_HEIGHT * 5) - 10) {
+            if (this.y < (ROW_HEIGHT * 5) + PLAYER_OFFSET_Y) {
                 this.y = this.y + ROW_HEIGHT;
             }
             break;
@@ -156,7 +176,7 @@ Player.prototype.handleInput = function(dir) {
                 break;
             }
             this.upDelay = true;
-            if (this.y > 0) {
+            if (this.y > 0 + PLAYER_OFFSET_Y) {
                 this.y = this.y - ROW_HEIGHT;
             }
             break;
@@ -194,7 +214,7 @@ Player.prototype.render = function() {
 
 // Reset the player to the starting position
 Player.prototype.reset = function() {
-    this.y = 5 * ROW_HEIGHT - 10;
+    this.y = 5 * ROW_HEIGHT + PLAYER_OFFSET_Y;
     this.x = 2 * COLUMN_WIDTH;
 };
 
@@ -202,7 +222,7 @@ Player.prototype.reset = function() {
 // animation because part of it is accomplished by a conditional hack coded
 // into the render() method in engine.js since that method is inaccessible here.
 var win = function() {
-    // Player would still be rendered with hack if not repositioned.
+    // Player would still be rendered if not repositioned off screen.
     player.y = 1500;
     player.x = -1500;
     window.victoryConditionsMet = true;
@@ -212,9 +232,9 @@ var win = function() {
 var allEnemies = [];
 var player = new Player();
 
-// Populate the enemies. Loops result in rows with 5, 4, and 3 enemies.
+// Populate the enemies.
 for (var row = 1; row < 4; row++) {
-    for (var r = 6; r > row; r--) {
+    for (var r = MAX_ENEMIES + 1; r > row; r--) {
         allEnemies.push(new Enemy(row));
     }
 }
