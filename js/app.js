@@ -11,7 +11,9 @@ var COLLISION_OFFSET_X = 56;
 
 //Animation settings
 var PLAYER_COLLISION_SPEED = 1000;
+var STAR_SPEED = 100;
 var VICTORY_ANIMATION_OVERRUN = 50;
+var VICTORY_STAR_SPEED_MULTIPLIER = 3;
 
 //Game settings
 var MAP_WIDTH = 505;
@@ -22,6 +24,9 @@ var ENEMY_END_X = 700;      // The range of x positions enemies
 var ENEMY_START_X = -900;   // are allowed to exist in.
 var MAX_ENEMIES = 5;        // Number of enemies in the top row.
 var COLLISION_END_X = 1000; // X-position where collision animation ends.
+
+// Changes to VICTORY_STAR_SPEED_MULTIPLIER when victory conditions met
+var speedMultipler = 1;
 
 // Enemy class. Initialize at a randomized x position and speed.
 // Parameter: row, the row the enemy should be located in.
@@ -72,14 +77,14 @@ Enemy.prototype.render = function() {
 var WinStar = function(x, y) {
     this.x = x;
     this.y = y;
-    this.speed = 100;
+    this.speed = STAR_SPEED;
     this.sprite = 'images/Star.png';
 };
 
 // Animates winStar. Animation changes if victory conditions are met.
 WinStar.prototype.update = function(dt) {
     var lowerBound = window.victoryConditionsMet ? (5 * ROW_HEIGHT + VICTORY_ANIMATION_OVERRUN) : 0;
-    this.y = this.y - (this.speed * dt);
+    this.y = this.y - (this.speed * dt * speedMultipler);
     if (this.y < -ROW_HEIGHT) {
         this.y = -ROW_HEIGHT;
         this.speed *= -1;
@@ -226,6 +231,7 @@ var win = function() {
     player.y = 1500;
     player.x = -1500;
     window.victoryConditionsMet = true;
+    speedMultipler = VICTORY_STAR_SPEED_MULTIPLIER;
 };
 
 // Instantiate enemy objects in an array and the player object
